@@ -63,9 +63,9 @@ export const difficultyEnum = pgEnum("difficulty", [
 export const users = pgTable("users", {
     id: bigserial("id", { mode: "number" }).primaryKey(),
 
-    name: varchar("name", { length: 100 }).notNull(),
+    name: varchar("name", { length: 100 }),
 
-    email: varchar("email", { length: 150 }).notNull().unique(),
+    email: varchar("email", { length: 150 }).unique(),
 
     image: text("image"),
 
