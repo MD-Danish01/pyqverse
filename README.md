@@ -105,39 +105,36 @@ flowchart LR
 
 ## 📁 Project Structure
 
-```mermaid
-flowchart TB
-    ROOT["cbt-based-exam-app/"]
-    
-    APP["app/"]
-    API["app/api/"]
-    PAGES["app/pages/"]
-    COMPONENTS["components/"]
-    DB_LAYER["db/"]
-    MIGRATIONS["drizzle/"]
-    LIB["lib/"]
-    PUBLIC["public/"]
-    TYPES["types/"]
-    CONFIG["config files"]
-    
-    ROOT --> APP
-    APP --> API
-    APP --> PAGES
-    ROOT --> COMPONENTS
-    ROOT --> DB_LAYER
-    ROOT --> MIGRATIONS
-    ROOT --> LIB
-    ROOT --> PUBLIC
-    ROOT --> TYPES
-    ROOT --> CONFIG
-    
-    PAGES --> "page.tsx<br/>tests-list, test-attempt<br/>results, general-instructions"
-    API --> "attempt, exam, submit-attempt<br/>user management"
-    COMPONENTS --> "question-renderer.tsx<br/>UI components"
-    DB_LAYER --> "schema.ts (Drizzle)"
-    MIGRATIONS --> "migration files"
-    LIB --> "cloudinary.ts, db.ts"
-    CONFIG --> "next.config.ts<br/>drizzle.config.ts<br/>tsconfig.json"
+```
+cbt-based-exam-app/
+├── app/                           # Next.js App Router
+│   ├── api/                       # Route handlers
+│   │   ├── attempt/
+│   │   ├── exam/
+│   │   ├── submit-attempt/
+│   │   └── user/
+│   ├── general-instructions/      # Exam instructions page
+│   ├── results/                   # Test results page
+│   ├── test-attempt/              # Test interface
+│   ├── tests-list/                # Available tests
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css
+├── components/                    # Reusable React components
+│   └── question-renderer.tsx      # Question display component
+├── db/                            # Database schema
+│   └── schema.ts                  # Drizzle ORM schema
+├── drizzle/                       # Database migrations
+├── lib/                           # Utilities
+│   ├── cloudinary.ts              # Media service
+│   └── db.ts                      # Database connection
+├── types/                         # TypeScript types
+├── public/                        # Static assets
+├── drizzle.config.ts              # Migration config
+├── next.config.ts                 # Next.js config
+├── tsconfig.json                  # TypeScript config
+├── package.json
+└── docker-compose.yml             # Local PostgreSQL setup
 ```
 
 ---
