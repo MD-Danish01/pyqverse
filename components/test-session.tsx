@@ -3,13 +3,14 @@
 import { useCallback, useMemo, useState } from "react";
 import type { AttemptAnswer, Question, QuestionStatus } from "./types";
 import { QuestionRenderer } from "./question-renderer";
+import { QuestionPalette } from "./question-palette";
 import { TestActions } from "./test-actions";
 import {
   buildAnswerMap,
   createEmptyAnswer,
-  getQuestionStatus,
   normalizeAnswer,
 } from "./utils/test-session";
+import { getQuestionStatus } from "./utils/question-palette";
 
 export type TestSessionSubmitPayload = {
   answers: Record<number, AttemptAnswer>;
@@ -189,6 +190,17 @@ export const TestSession = ({
     goToIndex(currentQuestionIndex + 1);
   };
 
+  const handleNavigateToQuestion = (questionId: number) => {
+    const targetIndex = questions.findIndex(
+      (question) => question.id === questionId,
+    );
+    if (targetIndex === -1) {
+      return;
+    }
+    commitCurrentAnswer();
+    goToIndex(targetIndex);
+  };
+
   const handleSubmit = () => {
     if (!onSubmit) {
       return;
@@ -227,13 +239,28 @@ export const TestSession = ({
 
   return (
     <div className="space-y-6">
-      <QuestionRenderer
-        question={currentQuestion}
-        answer={currentAnswer}
-        status={currentStatus}
-        onSelectOption={handleSelectOption}
-        onNumericalChange={handleNumericalChange}
-      />
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="min-w-0 flex-1">
+          <QuestionRenderer
+            question={currentQuestion}
+            answer={currentAnswer}
+            status={currentStatus}
+            onSelectOption={handleSelectOption}
+            onNumericalChange={handleNumericalChange}
+          />
+        </div>
+        <div className="w-full shrink-0 lg:w-[320px]">
+          <div className="lg:sticky lg:top-4 lg:h-[calc(100vh-140px)]">
+            <QuestionPalette
+              className="h-full"
+              questions={questions}
+              answers={answers}
+              currentQuestionId={currentQuestion.id}
+              onNavigate={handleNavigateToQuestion}
+            />
+          </div>
+        </div>
+      </div>
 
       <TestActions
         onPrevious={handlePrevious}

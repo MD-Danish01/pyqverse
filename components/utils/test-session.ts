@@ -1,4 +1,4 @@
-import type { AttemptAnswer, Question, QuestionStatus } from "../types";
+import type { AttemptAnswer, Question } from "../types";
 
 const isAnswered = (answer: AttemptAnswer) => {
   const hasOption = answer.selectedOptionId !== null &&
@@ -37,22 +37,3 @@ export const buildAnswerMap = (
   return map;
 };
 
-export const getQuestionStatus = (answer?: AttemptAnswer): QuestionStatus => {
-  if (!answer || !answer.visited) {
-    return "not_visited";
-  }
-
-  if (answer.isMarkedForReview && answer.answered) {
-    return "answered_and_review";
-  }
-
-  if (answer.isMarkedForReview) {
-    return "marked_for_review";
-  }
-
-  if (answer.answered) {
-    return "answered";
-  }
-
-  return "not_answered";
-};
