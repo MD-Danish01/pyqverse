@@ -4,38 +4,19 @@ import React from "react";
 import Image from "next/image";
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
-
-export type QuestionOption = {
-  id: number;
-  label: "A" | "B" | "C" | "D";
-  optionText?: string | null;
-  optionImageUrl?: string | null;
-};
-
-export type Question = {
-  id: number;
-  questionNumber: number;
-  subject: string;
-  difficulty?: "easy" | "medium" | "hard";
-  questionText?: string | null;
-  questionImageUrl?: string | null;
-  questionType: "single_correct" | "numerical";
-  options?: QuestionOption[];
-  selectedOptionId?: number | null;
-  numericalAnswer?: string;
-  isMarkedForReview?: boolean;
-};
+import type {
+  AttemptAnswer,
+  Question,
+  QuestionOption,
+  QuestionStatus,
+} from "./types";
 
 export type QuestionRendererProps = {
   question: Question;
+  answer: AttemptAnswer;
+  status: QuestionStatus;
   onSelectOption: (optionId: number) => void;
   onNumericalChange: (value: string) => void;
-  onClearResponse: () => void;
-  onToggleMarkForReview: () => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  disablePrevious?: boolean;
-  disableNext?: boolean;
 };
 
 const getSubjectBadgeClasses = (subject: string) => {
@@ -64,6 +45,39 @@ const getDifficultyBadgeClasses = (difficulty?: Question["difficulty"]) => {
       return "bg-red-50 text-red-700 border-red-200";
     default:
       return "bg-gray-50 text-gray-700 border-gray-200";
+  }
+};
+
+const getStatusBadgeClasses = (status: QuestionStatus) => {
+  switch (status) {
+    case "answered":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    case "marked_for_review":
+      return "bg-amber-50 text-amber-700 border-amber-200";
+    case "answered_and_review":
+      return "bg-amber-50 text-amber-700 border-amber-200";
+    case "not_answered":
+      return "bg-gray-50 text-gray-700 border-gray-200";
+    case "not_visited":
+    default:
+      return "bg-gray-50 text-gray-600 border-gray-200";
+  }
+};
+
+const getStatusLabel = (status: QuestionStatus) => {
+  switch (status) {
+    case "not_visited":
+      return "Not visited";
+    case "not_answered":
+      return "Not answered";
+    case "answered":
+      return "Answered";
+    case "marked_for_review":
+      return "Marked for review";
+    case "answered_and_review":
+      return "Answered and marked";
+    default:
+      return "Not visited";
   }
 };
 
@@ -307,24 +321,19 @@ const OptionCard = ({
 
 export const QuestionRenderer = ({
   question,
+  answer,
+  status,
   onSelectOption,
   onNumericalChange,
-  onClearResponse,
-  onToggleMarkForReview,
-  onNext,
-  onPrevious,
-  disablePrevious,
-  disableNext,
 }: QuestionRendererProps) => {
   const isNumerical = question.questionType === "numerical";
   const radioName = `question-${question.id}`;
 
   return (
-    <div className="flex h-screen flex-col bg-white">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-1 py-4 sm:px-6 lg:px-8">
+    <div className="bg-white">
+      <div className="border-b border-gray-200 bg-white px-1 py-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
-          <div className="flex flex-wrap items-center gap-5">
+          <div className="flex flex-wrap items-center gap-4">
             <span className="text-sm font-semibold text-gray-700">
               Question {question.questionNumber}
             </span>
@@ -345,165 +354,70 @@ export const QuestionRenderer = ({
                   question.difficulty.slice(1)}
               </span>
             ) : null}
-            {question.isMarkedForReview ? (
-              <span className="border-0 border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
-                Marked for Review
+            <span
+              className={`border-0 px-3 py-1 text-xs font-semibold ${getStatusBadgeClasses(
+                status,
+              )}`}
+            >
+              {getStatusLabel(status)}
+            </span>
+            {answer.isMarkedForReview ? (
+              <span className="border-0 border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                Marked for review
               </span>
             ) : null}
           </div>
         </div>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-          {/* Question area */}
-          <section className="border border-gray-200 p-5 sm:p-6">
-            {question.questionImageUrl ? (
-              <QuestionImage
-                src={question.questionImageUrl}
-                alt={`Question ${question.questionNumber}`}
-                allowScroll
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="border border-gray-200 p-5 sm:p-6">
+          {question.questionImageUrl ? (
+            <QuestionImage
+              src={question.questionImageUrl}
+              alt={`Question ${question.questionNumber}`}
+              allowScroll
+            />
+          ) : null}
+          {question.questionText ? (
+            <MathContent content={question.questionText} />
+          ) : null}
+        </section>
+
+        <section className="space-y-4">
+          {isNumerical ? (
+            <div className="rounded-xl border border-gray-200 p-4 sm:p-5">
+              <label
+                className="block text-sm font-semibold text-gray-700"
+                htmlFor="numerical-answer"
+              >
+                Numerical Answer
+              </label>
+              <input
+                id="numerical-answer"
+                type="text"
+                inputMode="decimal"
+                placeholder="Enter your answer"
+                value={answer.numericalAnswer ?? ""}
+                onChange={(event) => onNumericalChange(event.target.value)}
+                className="mt-3 h-12 w-full rounded-lg border border-gray-300 px-4 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
               />
-            ) : null}
-            {question.questionText ? (
-              <MathContent content={question.questionText} />
-            ) : null}
-          </section>
-
-          {/* Response area */}
-          <section className="space-y-4">
-            {isNumerical ? (
-              <div className="rounded-xl border border-gray-200 p-4 sm:p-5">
-                <label
-                  className="block text-sm font-semibold text-gray-700"
-                  htmlFor="numerical-answer"
-                >
-                  Numerical Answer
-                </label>
-                <input
-                  id="numerical-answer"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="Enter your answer"
-                  value={question.numericalAnswer ?? ""}
-                  onChange={(event) => onNumericalChange(event.target.value)}
-                  className="mt-3 h-12 w-full rounded-lg border border-gray-300 px-4 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(question.options ?? []).map((option) => (
+                <OptionCard
+                  key={option.id}
+                  option={option}
+                  isSelected={option.id === answer.selectedOptionId}
+                  onSelect={() => onSelectOption(option.id)}
+                  name={radioName}
                 />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {(question.options ?? []).map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    option={option}
-                    isSelected={option.id === question.selectedOptionId}
-                    onSelect={() => onSelectOption(option.id)}
-                    name={radioName}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-      </div>
-
-      {/* Sticky Footer */}
-      <div className="sticky bottom-0 z-10 border-t border-gray-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={onClearResponse}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300"
-              >
-                Clear Response
-              </button>
-              <button
-                type="button"
-                onClick={onToggleMarkForReview}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-400 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300"
-              >
-                {question.isMarkedForReview ? "Unmark Review" : "Mark for Review"}
-              </button>
+              ))}
             </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={onPrevious}
-                disabled={disablePrevious}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                onClick={onNext}
-                disabled={disableNext}
-                className="rounded-lg border border-gray-800 bg-gray-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-300"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
+          )}
+        </section>
       </div>
     </div>
   );
 };
-
-const sampleQuestion: Question = {
-  id: 101,
-  questionNumber: 12,
-  subject: "Mathematics",
-  difficulty: "medium",
-  questionText:
-    "If \\((x^2 + y^2 = 1)\\), find the maximum value of \\(x + y\\).\\n\\n\\[x, y \\ge 0\\]",
-  questionImageUrl: null,
-  questionType: "single_correct",
-  options: [
-    { id: 1, label: "A", optionText: "\\(1\\)" },
-    { id: 2, label: "B", optionText: "\\(\\sqrt{2}\\)" },
-    { id: 3, label: "C", optionText: "\\(2\\)" },
-    { id: 4, label: "D", optionText: "\\(\\frac{3}{2}\\)" },
-  ],
-  selectedOptionId: null,
-  numericalAnswer: "",
-  isMarkedForReview: false,
-};
-
-const QuestionRendererDemo = () => {
-  const [question, setQuestion] = React.useState<Question>(sampleQuestion);
-
-  return (
-    <QuestionRenderer
-      question={question}
-      onSelectOption={(optionId) =>
-        setQuestion((current) => ({ ...current, selectedOptionId: optionId }))
-      }
-      onNumericalChange={(value) =>
-        setQuestion((current) => ({ ...current, numericalAnswer: value }))
-      }
-      onClearResponse={() =>
-        setQuestion((current) => ({
-          ...current,
-          selectedOptionId: null,
-          numericalAnswer: "",
-        }))
-      }
-      onToggleMarkForReview={() =>
-        setQuestion((current) => ({
-          ...current,
-          isMarkedForReview: !current.isMarkedForReview,
-        }))
-      }
-      onNext={() => null}
-      onPrevious={() => null}
-      disablePrevious
-      disableNext
-    />
-  );
-};
-
-export default QuestionRendererDemo;
