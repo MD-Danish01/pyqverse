@@ -31,6 +31,13 @@ type AttemptResponse = {
   questions?: AttemptQuestionPayload[];
 };
 
+type ExamSummary = {
+  id: number;
+  name: string;
+  examType: string;
+  durationSeconds: number;
+};
+
 const normalizeSubject = (value: string | null): string => {
   return value ?? "Unknown"; // Pass through directly, no hardcoded defaults
 };
@@ -67,11 +74,76 @@ const AttemptTest = () => {
   const params = useParams();
   const router = useRouter();
   const examId = params.examId;
+  const examIdParam = Array.isArray(examId) ? examId[0] : examId;
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [examInfo, setExamInfo] = useState<ExamSummary | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [isExamLoading, setIsExamLoading] = useState(true);
+  const [examError, setExamError] = useState<string | null>(null);
+
+  const shouldStartTimer = remainingSeconds !== null && remainingSeconds > 0;
+
+  useEffect(() => {
+    const fetchExamInfo = async () => {
+      try {
+        setIsExamLoading(true);
+        setExamError(null);
+        setRemainingSeconds(null);
+
+        const res = await fetch("/api/exam/get-exams");
+        if (!res.ok) {
+          throw new Error("Failed to fetch exam details.");
+        }
+
+        const data = (await res.json()) as ExamSummary[];
+        const examIdNumber = Number(examIdParam);
+        if (Number.isNaN(examIdNumber)) {
+          throw new Error("Invalid exam id.");
+        }
+
+        const match = data.find((exam) => exam.id === examIdNumber);
+        if (!match) {
+          throw new Error("Exam details not found.");
+        }
+
+        setExamInfo(match);
+        setRemainingSeconds(Math.max(0, Math.floor(match.durationSeconds)));
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to load exam details.";
+        setExamError(message);
+      } finally {
+        setIsExamLoading(false);
+      }
+    };
+
+    if (examIdParam) {
+      fetchExamInfo();
+    }
+  }, [examIdParam]);
+
+  useEffect(() => {
+    if (!shouldStartTimer) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev === null) {
+          return prev;
+        }
+        return Math.max(prev - 1, 0);
+      });
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [shouldStartTimer]);
 
   useEffect(() => {
     const userId: number | null = JSON.parse(
@@ -87,7 +159,7 @@ const AttemptTest = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ examId, userId }),
+          body: JSON.stringify({ examId: examIdParam, userId }),
         });
 
         if (!res.ok) {
@@ -106,10 +178,10 @@ const AttemptTest = () => {
       }
     };
 
-    if (examId) {
+    if (examIdParam) {
       fetchQuestions();
     }
-  }, [examId]);
+  }, [examIdParam]);
 
   const handleSubmitTest = async ({ answers }: TestSessionSubmitPayload) => {
     const userId: number | null = JSON.parse(
@@ -168,7 +240,9 @@ const AttemptTest = () => {
     }
   };
 
-  if (isLoading) {
+  const pageError = errorMessage ?? examError;
+
+  if (isLoading || isExamLoading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center text-sm text-gray-600">
         Loading questions...
@@ -176,10 +250,18 @@ const AttemptTest = () => {
     );
   }
 
-  if (errorMessage) {
+  if (pageError) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center text-sm text-red-600">
-        {errorMessage}
+        {pageError}
+      </div>
+    );
+  }
+
+  if (!examInfo || remainingSeconds === null) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10 text-center text-sm text-red-600">
+        Unable to load exam details.
       </div>
     );
   }
@@ -195,7 +277,7 @@ const AttemptTest = () => {
   const sessionKey = questions.map((question) => question.id).join("-") || "empty";
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col gap-6">
       {submitError ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-700">{submitError}</p>
@@ -208,12 +290,17 @@ const AttemptTest = () => {
         </div>
       ) : null}
 
-      <TestSession
-        key={sessionKey}
-        questions={questions}
-        onSubmit={handleSubmitTest}
-        isSubmitting={isSubmitting}
-      />
+      <div className="min-h-0 flex-1">
+        <TestSession
+          key={sessionKey}
+          questions={questions}
+          onSubmit={handleSubmitTest}
+          isSubmitting={isSubmitting}
+          examName={examInfo.name}
+          examType={examInfo.examType}
+          remainingSeconds={remainingSeconds}
+        />
+      </div>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import type { AttemptAnswer, Question } from "./types";
 import { PaletteGrid } from "./palette-grid";
 import { PaletteLegend } from "./palette-legend";
@@ -11,6 +11,7 @@ type QuestionPaletteProps = {
   answers: Record<number, AttemptAnswer>;
   currentQuestionId?: number | null;
   onNavigate: (questionId: number) => void;
+  header?: ReactNode;
   className?: string;
 };
 
@@ -19,6 +20,7 @@ export const QuestionPalette = ({
   answers,
   currentQuestionId,
   onNavigate,
+  header,
   className,
 }: QuestionPaletteProps) => {
   const counts = useMemo(
@@ -28,10 +30,11 @@ export const QuestionPalette = ({
 
   return (
     <aside
-      className={`flex h-full flex-col space-y-2 rounded-sm border border-gray-200 bg-white text-white ${
+      className={`flex h-full min-h-0 flex-col space-y-2 rounded-sm border border-gray-200 bg-white text-white ${
         className ?? ""
       }`}
     >
+      {header ? <div className="px-4 pt-4">{header}</div> : null}
       <div className="px-4 py-3">
         <PaletteLegend counts={counts} />
       </div>

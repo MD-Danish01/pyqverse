@@ -5,6 +5,7 @@ import type { AttemptAnswer, Question, QuestionStatus } from "./types";
 import { QuestionRenderer } from "./question-renderer";
 import { QuestionPalette } from "./question-palette";
 import { TestActions } from "./test-actions";
+import { ExamHeader } from "./exam-header";
 import {
   buildAnswerMap,
   createEmptyAnswer,
@@ -23,6 +24,9 @@ type TestSessionProps = {
   onSubmit?: (payload: TestSessionSubmitPayload) => void | Promise<void>;
   isSubmitting?: boolean;
   submitLabel?: string;
+  examName: string;
+  examType: string;
+  remainingSeconds: number;
 };
 
 export const TestSession = ({
@@ -31,6 +35,9 @@ export const TestSession = ({
   onSubmit,
   isSubmitting,
   submitLabel = "Submit Test",
+  examName,
+  examType,
+  remainingSeconds,
 }: TestSessionProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, AttemptAnswer>>(() => {
@@ -125,18 +132,6 @@ export const TestSession = ({
       ...answer,
       selectedOptionId: null,
       numericalAnswer: "",
-      visited: true,
-    }));
-  };
-
-  const handleToggleReview = () => {
-    if (!currentQuestion) {
-      return;
-    }
-
-    updateAnswer(currentQuestion.id, (answer) => ({
-      ...answer,
-      isMarkedForReview: !answer.isMarkedForReview,
       visited: true,
     }));
   };
@@ -241,36 +236,46 @@ export const TestSession = ({
   }
 
   return (
-    <div className="">
-      <div className="flex flex-col lg:flex-row">
-        <div className="min-w-0 flex-1">
-          <QuestionRenderer
-            question={currentQuestion}
-            answer={currentAnswer}
-            status={currentStatus}
-            onSelectOption={handleSelectOption}
-            onNumericalChange={handleNumericalChange}
-          />
+    <div className="flex h-full flex-col">
+      <div className="flex h-full min-h-0 flex-col lg:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <QuestionRenderer
+              question={currentQuestion}
+              answer={currentAnswer}
+              status={currentStatus}
+              onSelectOption={handleSelectOption}
+              onNumericalChange={handleNumericalChange}
+            />
+          </div>
 
-          <TestActions
-            onPrevious={handlePrevious}
-            onNext={handleNext}
-            onSaveNext={handleSaveNext}
-            onClearResponse={handleClearResponse}
-            onMarkForReview={handleToggleReview}
-            onSaveMarkForReview={handleSaveMarkForReview}
-            disablePrevious={currentQuestionIndex === 0}
-            disableNext={currentQuestionIndex === questions.length - 1}
-            isMarkedForReview={currentAnswer.isMarkedForReview}
-            onSubmit={onSubmit ? handleSubmit : undefined}
-            isSubmitting={isSubmitting}
-            submitLabel={submitLabel}
-          />
+          <div className="shrink-0">
+            <TestActions
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+              onSaveNext={handleSaveNext}
+              onClearResponse={handleClearResponse}
+              onSaveMarkForReview={handleSaveMarkForReview}
+              disablePrevious={currentQuestionIndex === 0}
+              disableNext={currentQuestionIndex === questions.length - 1}
+              onSubmit={onSubmit ? handleSubmit : undefined}
+              isSubmitting={isSubmitting}
+              submitLabel={submitLabel}
+            />
+          </div>
         </div>
-        <div className="w-full shrink-0 lg:w-95">
-          <div className="lg:sticky lg:h-[calc(100vh-140px)]">
+
+        <div className="min-h-0 w-full shrink-0 lg:w-95">
+          <div className="h-full lg:sticky lg:top-0">
             <QuestionPalette
-              className="h-full"
+              className="h-full min-h-0"
+              header={
+                <ExamHeader
+                  examName={examName}
+                  examType={examType}
+                  remainingSeconds={remainingSeconds}
+                />
+              }
               questions={questions}
               answers={answers}
               currentQuestionId={currentQuestion.id}

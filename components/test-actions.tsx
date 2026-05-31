@@ -5,11 +5,9 @@ type TestActionsProps = {
   onNext: () => void;
   onSaveNext: () => void;
   onClearResponse: () => void;
-  onMarkForReview: () => void;
   onSaveMarkForReview: () => void;
   disablePrevious?: boolean;
   disableNext?: boolean;
-  isMarkedForReview?: boolean;
   onSubmit?: () => void | Promise<void>;
   isSubmitting?: boolean;
   submitLabel?: string;
@@ -35,11 +33,9 @@ export const TestActions = ({
   onNext,
   onSaveNext,
   onClearResponse,
-  onMarkForReview,
   onSaveMarkForReview,
   disablePrevious,
   disableNext,
-  isMarkedForReview,
   onSubmit,
   isSubmitting,
   submitLabel = "Submit Test",
@@ -58,8 +54,8 @@ export const TestActions = ({
           <button type="button" onClick={onSaveMarkForReview} className={orangeButton}>
             SAVE & MARK FOR REVIEW
           </button>
-          <button type="button" onClick={onMarkForReview} className={blueButton}>
-            {isMarkedForReview ? "UNMARK REVIEW" : "MARK FOR REVIEW & NEXT"}
+          <button type="button" onClick={onSaveMarkForReview} className={blueButton}>
+            MARK FOR REVIEW & NEXT
           </button>
         </div>
 

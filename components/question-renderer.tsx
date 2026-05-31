@@ -346,7 +346,7 @@ export const QuestionRenderer = ({
             </span>
             {question.difficulty ? (
               <span
-                className={`border-0 px-3 py-1 text-xs font-semibold ${getDifficultyBadgeClasses(
+                className={`border-0 px-3 py-1 text-xs font-semibold hidden ${getDifficultyBadgeClasses(
                   question.difficulty,
                 )}`}
               >
