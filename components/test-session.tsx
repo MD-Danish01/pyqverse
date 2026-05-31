@@ -39,7 +39,8 @@ export const TestSession = ({
     if (!firstQuestion) {
       return map;
     }
-    const existing = map[firstQuestion.id] ?? createEmptyAnswer(firstQuestion.id);
+    const existing =
+      map[firstQuestion.id] ?? createEmptyAnswer(firstQuestion.id);
     return {
       ...map,
       [firstQuestion.id]: normalizeAnswer({ ...existing, visited: true }),
@@ -148,8 +149,8 @@ export const TestSession = ({
     const targetQuestion = questions[safeIndex];
     if (targetQuestion) {
       setAnswers((prev) => {
-        const existing = prev[targetQuestion.id] ??
-          createEmptyAnswer(targetQuestion.id);
+        const existing =
+          prev[targetQuestion.id] ?? createEmptyAnswer(targetQuestion.id);
         if (existing.visited) {
           return prev;
         }
@@ -223,7 +224,9 @@ export const TestSession = ({
 
     const updatedStatuses: Record<number, QuestionStatus> = {};
     for (const question of questions) {
-      updatedStatuses[question.id] = getQuestionStatus(updatedAnswers[question.id]);
+      updatedStatuses[question.id] = getQuestionStatus(
+        updatedAnswers[question.id],
+      );
     }
 
     onSubmit({ answers: updatedAnswers, questionStatuses: updatedStatuses });
@@ -238,8 +241,8 @@ export const TestSession = ({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-6 lg:flex-row">
+    <div className="">
+      <div className="flex flex-col lg:flex-row">
         <div className="min-w-0 flex-1">
           <QuestionRenderer
             question={currentQuestion}
@@ -248,9 +251,24 @@ export const TestSession = ({
             onSelectOption={handleSelectOption}
             onNumericalChange={handleNumericalChange}
           />
+
+          <TestActions
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            onSaveNext={handleSaveNext}
+            onClearResponse={handleClearResponse}
+            onMarkForReview={handleToggleReview}
+            onSaveMarkForReview={handleSaveMarkForReview}
+            disablePrevious={currentQuestionIndex === 0}
+            disableNext={currentQuestionIndex === questions.length - 1}
+            isMarkedForReview={currentAnswer.isMarkedForReview}
+            onSubmit={onSubmit ? handleSubmit : undefined}
+            isSubmitting={isSubmitting}
+            submitLabel={submitLabel}
+          />
         </div>
-        <div className="w-full shrink-0 lg:w-[320px]">
-          <div className="lg:sticky lg:top-4 lg:h-[calc(100vh-140px)]">
+        <div className="w-full shrink-0 lg:w-95">
+          <div className="lg:sticky lg:h-[calc(100vh-140px)]">
             <QuestionPalette
               className="h-full"
               questions={questions}
@@ -261,31 +279,6 @@ export const TestSession = ({
           </div>
         </div>
       </div>
-
-      <TestActions
-        onPrevious={handlePrevious}
-        onNext={handleNext}
-        onSaveNext={handleSaveNext}
-        onClearResponse={handleClearResponse}
-        onMarkForReview={handleToggleReview}
-        onSaveMarkForReview={handleSaveMarkForReview}
-        disablePrevious={currentQuestionIndex === 0}
-        disableNext={currentQuestionIndex === questions.length - 1}
-        isMarkedForReview={currentAnswer.isMarkedForReview}
-      />
-
-      {onSubmit ? (
-        <div className="flex justify-end px-4 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="h-11 rounded-md border border-gray-800 bg-gray-800 px-6 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-300"
-          >
-            {isSubmitting ? "Submitting..." : submitLabel}
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 };
