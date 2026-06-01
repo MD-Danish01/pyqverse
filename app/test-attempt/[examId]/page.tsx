@@ -28,6 +28,7 @@ type AttemptQuestionPayload = {
 };
 
 type AttemptResponse = {
+  attemptId?: number;
   questions?: AttemptQuestionPayload[];
 };
 
@@ -76,6 +77,7 @@ const AttemptTest = () => {
   const examId = params.examId;
   const examIdParam = Array.isArray(examId) ? examId[0] : examId;
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [attemptId, setAttemptId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -167,6 +169,7 @@ const AttemptTest = () => {
         }
 
         const data = (await res.json()) as AttemptResponse;
+        setAttemptId(data.attemptId ?? null);
         const normalized = (data.questions ?? []).map(normalizeQuestion);
         setQuestions(normalized);
       } catch (error) {
@@ -193,6 +196,11 @@ const AttemptTest = () => {
       return;
     }
 
+    if (!attemptId) {
+      setSubmitError("Attempt not found. Please start the test again.");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -206,7 +214,7 @@ const AttemptTest = () => {
       }));
 
       const payload = {
-        examId: Number(examId),
+        attemptId,
         userId,
         studentResponses,
         submittedAt: new Date().toISOString(),
