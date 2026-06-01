@@ -21,7 +21,6 @@
 
 // export default GeneralInstructions;
 
-
 "use client";
 
 import Image from "next/image";
@@ -61,8 +60,8 @@ export default function GeneralInstructionsPage() {
             </p>
 
             <p>
-              <span className="font-medium">Subjects:</span> Physics,
-              Chemistry, Mathematics
+              <span className="font-medium">Subjects:</span> Physics, Chemistry,
+              Mathematics
             </p>
 
             <p>
@@ -109,9 +108,10 @@ export default function GeneralInstructionsPage() {
             <Image
               src="/instructions/question-palette.png"
               alt="Question palette example"
+              className="h-auto w-auto object-contain"
               width={1200}
               height={600}
-              className="w-full h-auto"
+              loading="lazy"
             />
           </div>
 
@@ -141,9 +141,7 @@ export default function GeneralInstructionsPage() {
 
                 <tr className="border-b">
                   <td className="py-3">Answered</td>
-                  <td className="py-3">
-                    You selected an answer and saved it.
-                  </td>
+                  <td className="py-3">You selected an answer and saved it.</td>
                 </tr>
 
                 <tr className="border-b">
@@ -170,13 +168,14 @@ export default function GeneralInstructionsPage() {
           <h2 className="mb-4 text-xl font-semibold">Navigation Guide</h2>
 
           {/* Replace image path */}
-          <div className="mb-6 overflow-hidden rounded-lg border">
+          <div className="mb-6 rounded-lg border overflow-hidden">
             <Image
               src="/instructions/navigation-guide.png"
               alt="Navigation guide"
+              className="h-auto w-auto object-contain"
               width={1200}
               height={600}
-              className="w-full h-auto"
+              loading="lazy"
             />
           </div>
 
@@ -208,9 +207,7 @@ export default function GeneralInstructionsPage() {
 
         {/* Answering Questions */}
         <section className="mb-6 rounded-lg border bg-card p-6">
-          <h2 className="mb-4 text-xl font-semibold">
-            Answering Questions
-          </h2>
+          <h2 className="mb-4 text-xl font-semibold">Answering Questions</h2>
 
           <ol className="space-y-3 list-decimal pl-5">
             <li>Select the option you believe is correct.</li>
@@ -247,17 +244,13 @@ export default function GeneralInstructionsPage() {
               automatically.
             </li>
 
-            <li>
-              Once submitted, answers cannot be modified or resubmitted.
-            </li>
+            <li>Once submitted, answers cannot be modified or resubmitted.</li>
           </ul>
         </section>
 
         {/* Results */}
         <section className="mb-6 rounded-lg border bg-card p-6">
-          <h2 className="mb-4 text-xl font-semibold">
-            Results & Solutions
-          </h2>
+          <h2 className="mb-4 text-xl font-semibold">Results & Solutions</h2>
 
           <p className="mb-4">
             After submitting the test, you will receive a detailed performance
