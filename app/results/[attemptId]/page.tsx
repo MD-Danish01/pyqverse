@@ -72,7 +72,7 @@ interface PageProps {
 
 export default async function ResultPage({ params }: PageProps) {
   const { attemptId } = await params;
-  console.log("Received attemptId:", attemptId);
+  // console.log("Received attemptId:", attemptId);
   const attemptIdNumber = Number(attemptId);
 
   if (Number.isNaN(attemptIdNumber)) {
