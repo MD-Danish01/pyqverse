@@ -14,6 +14,13 @@ import {
 } from "./utils/test-session";
 import { getQuestionStatus } from "./utils/question-palette";
 
+const formatTime = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
+
 export type TestSessionSubmitPayload = {
   answers: Record<number, AttemptAnswer>;
   questionStatuses: Record<number, QuestionStatus>;
@@ -263,6 +270,38 @@ export const TestSession = ({
       onTouchEnd={handleTouchEnd}
     >
       <div className="flex min-h-0 flex-1 flex-col">
+        {/* Mobile: Header with Hamburger and Timer - Sticky at Top */}
+        <div className="sticky top-0 z-20 border-b border-gray-200 bg-white px-2 py-2 sm:px-4 lg:hidden">
+          <div className="flex items-center justify-between">
+            {/* Hamburger Icon */}
+            <button
+              type="button"
+              onClick={handleTogglePalette}
+              className="p-2 hover:bg-gray-100 rounded transition"
+              aria-label="Toggle question palette"
+            >
+              <svg
+                className="h-6 w-6 text-gray-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+
+            {/* Timer */}
+            <div className="text-sm font-semibold text-gray-900">
+              {formatTime(remainingSeconds)}
+            </div>
+          </div>
+        </div>
+
         <div className="min-h-0 flex-1 overflow-y-auto">
           <QuestionRenderer
             question={currentQuestion}
