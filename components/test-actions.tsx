@@ -11,10 +11,20 @@ type TestActionsProps = {
   onSubmit?: () => void | Promise<void>;
   isSubmitting?: boolean;
   submitLabel?: string;
+  onTogglePalette?: () => void;
+  isPaletteOpen?: boolean;
+  remainingSeconds?: number;
+};
+
+const formatTime = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
 const baseButton =
-  "h-9 px-3 py-1 text-sm font-semibold border rounded transition focus:outline-none disabled:cursor-not-allowed";
+  "h-8 px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold border rounded transition focus:outline-none disabled:cursor-not-allowed whitespace-nowrap";
 
 const greenButton =
   `${baseButton} bg-green-500 text-white border-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:border-gray-300`;
@@ -39,56 +49,92 @@ export const TestActions = ({
   onSubmit,
   isSubmitting,
   submitLabel = "Submit Test",
+  onTogglePalette,
+  isPaletteOpen,
+  remainingSeconds = 0,
 }: TestActionsProps) => {
   return (
-    <div className="sticky bottom-0 z-10 border-t px-20 md:px-6 lg:px-20 border-gray-200 bg-white">
-      <div className="mx-auto space-y-2 px-4 py-3 sm:px-6 lg:px-8">
-        {/* Row 1: Save & Next, Clear, Save & Mark for Review, Mark for Review & Next */}
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={onSaveNext} className={greenButton}>
-            SAVE & NEXT
-          </button>
-          <button type="button" onClick={onClearResponse} className={outlineButton}>
-            CLEAR
-          </button>
-          <button type="button" onClick={onSaveMarkForReview} className={orangeButton}>
-            SAVE & MARK FOR REVIEW
-          </button>
-          <button type="button" onClick={onSaveMarkForReview} className={blueButton}>
-            MARK FOR REVIEW & NEXT
-          </button>
-        </div>
+    <div className="sticky bottom-0 z-10 border-t border-gray-200 bg-white">
+      {/* Mobile: Header with Hamburger and Timer */}
+      <div className="flex items-center justify-between border-b border-gray-200 px-2 py-2 sm:px-4 lg:hidden">
+        {/* Hamburger Icon */}
+        <button
+          type="button"
+          onClick={onTogglePalette}
+          className="p-2 hover:bg-gray-100 rounded transition"
+          aria-label="Toggle question palette"
+        >
+          <svg
+            className="h-6 w-6 text-gray-700"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
 
-        {/* Row 2: Back, Next, Submit */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onPrevious}
-              disabled={disablePrevious}
-              className={outlineButton}
-            >
-              &lt;&lt; BACK
+        {/* Timer */}
+        <div className="text-sm font-semibold text-gray-900">
+          {formatTime(remainingSeconds)}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="px-2 py-3 sm:px-4 md:px-6 lg:px-20">
+        <div className="mx-auto space-y-2 px-2 sm:px-0 lg:px-6">
+          {/* Row 1: Save & Next, Clear, Save & Mark for Review, Mark for Review & Next */}
+          <div className="flex flex-wrap gap-1 sm:gap-2">
+            <button type="button" onClick={onSaveNext} className={greenButton}>
+              SAVE & NEXT
             </button>
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={disableNext}
-              className={outlineButton}
-            >
-              NEXT &gt;&gt;
+            <button type="button" onClick={onClearResponse} className={outlineButton}>
+              CLEAR
+            </button>
+            <button type="button" onClick={onSaveMarkForReview} className={orangeButton}>
+              SAVE & MARK FOR REVIEW
+            </button>
+            <button type="button" onClick={onSaveMarkForReview} className={blueButton}>
+              MARK FOR REVIEW & NEXT
             </button>
           </div>
-          {onSubmit ? (
-            <button
-              type="button"
-              onClick={onSubmit}
-              disabled={isSubmitting}
-              className={greenButton}
-            >
-              {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
-            </button>
-          ) : null}
+
+          {/* Row 2: Back, Next, Submit */}
+          <div className="flex flex-wrap items-center justify-between gap-1 sm:gap-2">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onPrevious}
+                disabled={disablePrevious}
+                className={outlineButton}
+              >
+                &lt;&lt; BACK
+              </button>
+              <button
+                type="button"
+                onClick={onNext}
+                disabled={disableNext}
+                className={outlineButton}
+              >
+                NEXT &gt;&gt;
+              </button>
+            </div>
+            {onSubmit ? (
+              <button
+                type="button"
+                onClick={onSubmit}
+                disabled={isSubmitting}
+                className={greenButton}
+              >
+                {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

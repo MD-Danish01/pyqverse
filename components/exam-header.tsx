@@ -39,8 +39,9 @@ export const ExamHeader = ({
           </h2>
           <p className="text-sm text-gray-600">{examType}</p>
         </div>
+        {/* Timer: Hidden on mobile (shown in action buttons), visible on desktop */}
         <div
-          className={`flex items-center gap-2 rounded-md border px-3 py-2 ${timerContainerClass}`}
+          className={`hidden lg:flex items-center gap-2 rounded-md border px-3 py-2 ${timerContainerClass}`}
         >
           <time
             className={`text-xl font-bold font-mono tabular-nums whitespace-nowrap ${timerTextClass}`}

@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { AttemptAnswer, Question, QuestionStatus } from "./types";
 import { QuestionRenderer } from "./question-renderer";
 import { QuestionPalette } from "./question-palette";
 import { TestActions } from "./test-actions";
 import { ExamHeader } from "./exam-header";
+import { BottomSheet } from "./bottom-sheet";
 import {
   buildAnswerMap,
   createEmptyAnswer,
@@ -40,6 +41,8 @@ export const TestSession = ({
   remainingSeconds,
 }: TestSessionProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const touchStartYRef = useRef<number>(0);
   const [answers, setAnswers] = useState<Record<number, AttemptAnswer>>(() => {
     const map = buildAnswerMap(questions, initialAnswers);
     const firstQuestion = questions[0];
@@ -227,6 +230,24 @@ export const TestSession = ({
     onSubmit({ answers: updatedAnswers, questionStatuses: updatedStatuses });
   };
 
+  const handleTogglePalette = useCallback(() => {
+    setIsPaletteOpen((prev) => !prev);
+  }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartYRef.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaY = touchStartYRef.current - touchEndY;
+
+    // If swiped up > 50px, open palette
+    if (deltaY > 50) {
+      setIsPaletteOpen(true);
+    }
+  }, []);
+
   if (!currentQuestion || !currentAnswer) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center text-sm text-gray-600">
@@ -236,54 +257,80 @@ export const TestSession = ({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-full min-h-0 flex-col lg:flex-row">
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <QuestionRenderer
-              question={currentQuestion}
-              answer={currentAnswer}
-              status={currentStatus}
-              onSelectOption={handleSelectOption}
-              onNumericalChange={handleNumericalChange}
-            />
-          </div>
-
-          <div className="shrink-0">
-            <TestActions
-              onPrevious={handlePrevious}
-              onNext={handleNext}
-              onSaveNext={handleSaveNext}
-              onClearResponse={handleClearResponse}
-              onSaveMarkForReview={handleSaveMarkForReview}
-              disablePrevious={currentQuestionIndex === 0}
-              disableNext={currentQuestionIndex === questions.length - 1}
-              onSubmit={onSubmit ? handleSubmit : undefined}
-              isSubmitting={isSubmitting}
-              submitLabel={submitLabel}
-            />
-          </div>
+    <div
+      className="flex h-screen flex-col lg:h-full lg:flex-row lg:gap-6"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <QuestionRenderer
+            question={currentQuestion}
+            answer={currentAnswer}
+            status={currentStatus}
+            onSelectOption={handleSelectOption}
+            onNumericalChange={handleNumericalChange}
+          />
         </div>
 
-        <div className="min-h-0 w-full shrink-0 lg:w-95">
-          <div className="h-full lg:sticky lg:top-0">
-            <QuestionPalette
-              className="h-full min-h-0"
-              header={
-                <ExamHeader
-                  examName={examName}
-                  examType={examType}
-                  remainingSeconds={remainingSeconds}
-                />
-              }
-              questions={questions}
-              answers={answers}
-              currentQuestionId={currentQuestion.id}
-              onNavigate={handleNavigateToQuestion}
-            />
-          </div>
+        <div className="shrink-0">
+          <TestActions
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            onSaveNext={handleSaveNext}
+            onClearResponse={handleClearResponse}
+            onSaveMarkForReview={handleSaveMarkForReview}
+            disablePrevious={currentQuestionIndex === 0}
+            disableNext={currentQuestionIndex === questions.length - 1}
+            onSubmit={onSubmit ? handleSubmit : undefined}
+            isSubmitting={isSubmitting}
+            submitLabel={submitLabel}
+            onTogglePalette={handleTogglePalette}
+            isPaletteOpen={isPaletteOpen}
+            remainingSeconds={remainingSeconds}
+          />
         </div>
       </div>
+
+      {/* Desktop: Sidebar Palette */}
+      <div className="hidden min-h-0 shrink-0 lg:flex lg:w-95 lg:flex-col">
+        <div className="min-h-0 flex-1 lg:sticky lg:top-0">
+          <QuestionPalette
+            className="h-full min-h-0"
+            header={
+              <ExamHeader
+                examName={examName}
+                examType={examType}
+                remainingSeconds={remainingSeconds}
+              />
+            }
+            questions={questions}
+            answers={answers}
+            currentQuestionId={currentQuestion.id}
+            onNavigate={handleNavigateToQuestion}
+          />
+        </div>
+      </div>
+
+      {/* Mobile: Bottom Sheet Palette */}
+      <BottomSheet
+        isOpen={isPaletteOpen}
+        onClose={() => setIsPaletteOpen(false)}
+        title="Questions"
+      >
+        <div className="px-4 py-4">
+          <QuestionPalette
+            className="min-h-0"
+            questions={questions}
+            answers={answers}
+            currentQuestionId={currentQuestion.id}
+            onNavigate={(questionId) => {
+              handleNavigateToQuestion(questionId);
+              setIsPaletteOpen(false);
+            }}
+          />
+        </div>
+      </BottomSheet>
     </div>
   );
 };

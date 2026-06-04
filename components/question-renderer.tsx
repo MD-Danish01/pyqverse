@@ -87,7 +87,7 @@ type MathSegment =
   | { type: "block"; value: string };
 
 const parseMathSegments = (content: string): MathSegment[] => {
-  const pattern = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\))/g;
+  const pattern = /(\$\$[\s\S]+?\$\$|\$(?!\$)[^\$]+\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\))/g;
   const segments: MathSegment[] = [];
   let lastIndex = 0;
 
@@ -102,7 +102,7 @@ const parseMathSegments = (content: string): MathSegment[] => {
       const value = raw.replace(/^\$\$|\$\$$/g, "").replace(/^\\\[|\\\]$/g, "");
       segments.push({ type: "block", value });
     } else {
-      const value = raw.replace(/^\\\(|\\\)$/g, "");
+      const value = raw.replace(/^\$|\$$/g, "").replace(/^\\\(|\\\)$/g, "");
       segments.push({ type: "inline", value });
     }
 
@@ -152,13 +152,11 @@ const MathContent = ({ content }: { content: string }) => {
     return (
       <div className="space-y-3">
         <div className="text-base leading-relaxed text-gray-900">
-          <div className="overflow-x-auto">
-            <BlockMath
-              math={content}
-              errorColor="#9CA3AF"
-              renderError={() => <span>{content}</span>}
-            />
-          </div>
+          <BlockMath
+            math={content}
+            errorColor="#9CA3AF"
+            renderError={() => <span>{content}</span>}
+          />
         </div>
       </div>
     );
@@ -178,21 +176,17 @@ const MathContent = ({ content }: { content: string }) => {
 
           if (segment.type === "inline") {
             return (
-              <span
+              <InlineMath
                 key={`inline-${index}`}
-                className="inline-block max-w-full overflow-x-auto align-baseline"
-              >
-                <InlineMath
-                  math={segment.value}
-                  errorColor="#9CA3AF"
-                  renderError={() => <span>{segment.value}</span>}
-                />
-              </span>
+                math={segment.value}
+                errorColor="#9CA3AF"
+                renderError={() => <span>{segment.value}</span>}
+              />
             );
           }
 
           return (
-            <div key={`block-${index}`} className="overflow-x-auto">
+            <div key={`block-${index}`}>
               <BlockMath
                 math={segment.value}
                 errorColor="#9CA3AF"

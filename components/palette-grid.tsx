@@ -18,7 +18,7 @@ export const PaletteGrid = ({
   onNavigate,
 }: PaletteGridProps) => {
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-2">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-1 sm:gap-2">
       {questions.map((question) => {
         const status = getQuestionStatus(answers[question.id]);
         return (
