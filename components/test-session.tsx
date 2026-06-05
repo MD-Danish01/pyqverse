@@ -268,8 +268,8 @@ export const TestSession = ({
     const touchEndY = e.changedTouches[0].clientY;
     const deltaY = touchStartYRef.current - touchEndY;
 
-    // If swiped up > 50px, open palette
-    if (deltaY > 50) {
+    // If swiped up > 200px, open palette
+    if (deltaY > 200) {
       setIsPaletteOpen(true);
     }
   }, []);

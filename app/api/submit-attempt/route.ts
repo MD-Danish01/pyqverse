@@ -59,9 +59,10 @@ export async function POST(request: NextRequest) {
         return { error: "Attempt not found", status: 404 };
       }
 
-      if (attempt.attemptStatus !== "in_progress") {
-        return { error: "Attempt is not in progress", status: 409 };
-      }
+      // Allow submission regardless of attempt status - user can submit anytime
+      // if (attempt.attemptStatus !== "in_progress") {
+      //   return { error: "Attempt is not in progress", status: 409 };
+      // }
 
       const lockedQuestions = await tx
         .select({
