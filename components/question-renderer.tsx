@@ -201,11 +201,27 @@ const MathContent = ({ content }: { content: string }) => {
 };
 
 type QuestionImageProps = {
-  src: string;
+  src: string | null | undefined;
   alt: string;
   maxHeightClass?: string;
   size?: "question" | "option";
   allowScroll?: boolean;
+};
+
+const isValidImageUrl = (src: string | null | undefined): src is string => {
+  if (!src || typeof src !== "string") return false;
+  // Trim and check for empty strings
+  const trimmed = src.trim();
+  if (trimmed === "" || src === "NULL") return false;
+  // Reject URLs that don't match after trimming (i.e., have leading/trailing whitespace)
+  if (trimmed !== src) return false;
+  // Only accept URLs that start with protocol or are relative paths
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/");
+};
+
+const trimImageUrl = (src: string | null | undefined): string | null => {
+  if (!src || typeof src !== "string") return null;
+  return src.trim();
 };
 
 const buildCloudinaryUrl = (src: string, width: number) => {
@@ -235,6 +251,12 @@ const QuestionImage = ({
   size = "question",
   allowScroll = true,
 }: QuestionImageProps) => {
+  // Trim and validate the image URL before attempting to render
+  const trimmedSrc = trimImageUrl(src);
+  if (!isValidImageUrl(trimmedSrc)) {
+    return null;
+  }
+
   // Use moderate widths: c_limit prevents upscaling small images
   const cloudinaryWidth = size === "option" ? 600 : 1000;
   const imageWidth = size === "option" ? 600 : 1000;
@@ -243,7 +265,7 @@ const QuestionImage = ({
     ? "(max-width: 768px) 90vw, 600px"
     : "(max-width: 768px) 100vw, 1000px";
   
-  const optimizedSrc = buildCloudinaryUrl(src, cloudinaryWidth);
+  const optimizedSrc = buildCloudinaryUrl(trimmedSrc, cloudinaryWidth);
   const overflowClass = allowScroll ? "overflow-auto" : "overflow-hidden";
 
   return (
@@ -366,7 +388,7 @@ export const QuestionRenderer = ({
 
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <section className="border border-gray-200 p-5 sm:p-6">
-          {question.questionImageUrl ? (
+          {isValidImageUrl(question.questionImageUrl) ? (
             <QuestionImage
               src={question.questionImageUrl}
               alt={`Question ${question.questionNumber}`}

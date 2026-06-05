@@ -123,13 +123,13 @@ export const subjects = pgTable(
 
         name: varchar("name", { length: 100 }).notNull(),
 
-        totalQuestions: integer("total_questions").notNull(),
+        totalQuestions: integer("total_questions"),
 
         marks: numeric("marks", {
             precision: 8,
             scale: 2,
             mode: "number",
-        }).notNull(),
+        }),
 
         createdAt: timestamp("created_at", { withTimezone: true })
             .notNull()

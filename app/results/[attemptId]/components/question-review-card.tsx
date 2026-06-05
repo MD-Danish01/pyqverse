@@ -8,6 +8,17 @@ type QuestionReviewCardProps = {
   item: QuestionReviewItem;
 };
 
+const isValidImageUrl = (src: string | null | undefined): src is string => {
+  if (!src || typeof src !== "string") return false;
+  // Trim and check for empty strings
+  const trimmed = src.trim();
+  if (trimmed === "" || src === "NULL") return false;
+  // Reject URLs that don't match after trimming (i.e., have leading/trailing whitespace)
+  if (trimmed !== src) return false;
+  // Only accept URLs that start with protocol or are relative paths
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/");
+};
+
 const statusConfig: Record<
   QuestionStatus,
   { label: string; badge: string; text: string }
@@ -75,9 +86,9 @@ export const QuestionReviewCard = ({ item }: QuestionReviewCardProps) => {
             {item.questionText}
           </p>
         ) : null}
-        {item.questionImageUrl ? (
+        {isValidImageUrl(item.questionImageUrl) ? (
           <Image
-            src={item.questionImageUrl}
+            src={item.questionImageUrl.trim()}
             alt={`Question ${item.order}`}
             className="h-auto w-auto object-contain"
             width={800}

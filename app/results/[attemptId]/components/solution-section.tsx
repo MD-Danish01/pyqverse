@@ -51,7 +51,7 @@ export const SolutionSection = ({
           ) : null}
           {solutionImageUrl ? (
             <Image
-              src={solutionImageUrl}
+              src={solutionImageUrl.trim()}
               alt="Solution illustration"
               className="h-auto w-auto object-contain"
               width={800}

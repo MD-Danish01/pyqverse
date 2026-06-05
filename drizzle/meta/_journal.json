@@ -15,6 +15,13 @@
       "when": 1779770092926,
       "tag": "0001_clear_emma_frost",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780643859079,
+      "tag": "0002_gigantic_kate_bishop",
+      "breakpoints": true
     }
   ]
 }
