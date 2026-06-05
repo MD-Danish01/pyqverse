@@ -196,6 +196,12 @@ export async function POST(request: NextRequest) {
       );
 
       if (answerRows.length > 0) {
+        // Delete existing answers for this attempt to prevent unique constraint violations
+        await tx
+          .delete(attemptAnswers)
+          .where(eq(attemptAnswers.attemptId, attemptIdNumber));
+
+        // Insert the new answers
         await tx.insert(attemptAnswers).values(answerRows);
       }
 
