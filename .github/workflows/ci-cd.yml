@@ -1,23 +1,27 @@
-name: CI
+name: CI/CD
+
 on:
   push:
     branches: [main]
+
   pull_request:
     branches: [main]
+
 jobs:
   ci:
     runs-on: ubuntu-latest
+
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
       CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
       CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
-   
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -34,3 +38,22 @@ jobs:
 
       - name: Run production build
         run: npm run build
+
+  deploy:
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/pyqverse
+            git pull origin main
+            npm ci
+            npm run build
+            pm2 restart pyqverse || pm2 start npm --name pyqverse -- start
