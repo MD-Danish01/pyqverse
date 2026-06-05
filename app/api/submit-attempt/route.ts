@@ -22,21 +22,23 @@ export async function POST(request: NextRequest) {
   const { attemptId, userId, studentResponses, submittedAt } =
     await request.json();
 
-  console.log("Received attemptId:", attemptId);
-  console.log("Received studentResponses:", studentResponses);
-
   const attemptIdNumber = Number(attemptId);
   const userIdNumber = Number(userId);
 
+ // console.log(`[SUBMIT-ATTEMPT] Attempting to submit: attemptId=${attemptIdNumber}, userId=${userIdNumber}, responseCount=${Array.isArray(studentResponses) ? studentResponses.length : 0}`);
+
   if (!attemptId || Number.isNaN(attemptIdNumber)) {
+    //console.warn("[SUBMIT-ATTEMPT] Invalid attemptId");
     return NextResponse.json({ error: "Invalid attemptId" }, { status: 400 });
   }
 
   if (!userId || Number.isNaN(userIdNumber)) {
+   // console.warn("[SUBMIT-ATTEMPT] Invalid userId");
     return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
   }
 
   if (!Array.isArray(studentResponses)) {
+    //console.warn("[SUBMIT-ATTEMPT] Invalid responses format");
     return NextResponse.json({ error: "Invalid responses" }, { status: 400 });
   }
 
@@ -239,12 +241,14 @@ export async function POST(request: NextRequest) {
     });
 
     if ("error" in result) {
+      console.error(`[SUBMIT-ATTEMPT] Error: ${result.error} (status=${result.status})`);
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
+    console.log(`[SUBMIT-ATTEMPT] Success: attemptId=${attemptIdNumber}, score=${result.data.totalScore}, correct=${result.data.correctCount}/${result.data.correctCount + result.data.wrongCount + result.data.unattemptedCount}`);
     return NextResponse.json(result.data, { status: result.status });
   } catch (error) {
-    console.error("Error submitting attempt:", error);
+    console.error("[SUBMIT-ATTEMPT] Exception:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

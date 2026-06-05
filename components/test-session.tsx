@@ -81,16 +81,16 @@ export const TestSession = ({
     return answers[currentQuestion.id] ?? createEmptyAnswer(currentQuestion.id);
   }, [answers, currentQuestion]);
 
-  // Notify parent of state changes for persistence
-  useEffect(() => {
-    if (onStateChange) {
-      onStateChange({
-        answers,
-        currentQuestionIndex,
-        isPaletteOpen,
-      });
-    }
-  }, [answers, currentQuestionIndex, isPaletteOpen, onStateChange]);
+  // // Notify parent of state changes for persistence
+  // useEffect(() => {
+  //   if (onStateChange) {
+  //     onStateChange({
+  //       answers,
+  //       currentQuestionIndex,
+  //       isPaletteOpen,
+  //     });
+  //   }
+  // }, [answers, currentQuestionIndex, isPaletteOpen, onStateChange]);
 
   const updateAnswer = useCallback(
     (questionId: number, updater: (answer: AttemptAnswer) => AttemptAnswer) => {

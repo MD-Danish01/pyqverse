@@ -309,6 +309,12 @@ const AttemptTest = () => {
         isMarkedForReview: answer.isMarkedForReview,
       }));
 
+      // console.log("[AttemptTest] Submitting attempt with:", {
+      //   attemptId,
+      //   userId,
+      //   responseCount: studentResponses.length,
+      // });
+
       const payload = {
         attemptId,
         userId,
@@ -324,11 +330,17 @@ const AttemptTest = () => {
 
       if (!res.ok) {
         const error = await res.json();
+        console.error("[AttemptTest] Submit failed with status:", res.status, error);
         throw new Error(error.error || "Failed to submit test");
       }
 
       const result = await res.json();
-      console.log("Test submitted successfully:", result);
+      // console.log("[AttemptTest] Test submitted successfully:", result);
+
+      // Validate response contains attemptId
+      if (!result.attemptId) {
+        throw new Error("Server response missing attemptId");
+      }
 
       // Clear localStorage after successful submission
       if (attemptId) {
@@ -336,16 +348,17 @@ const AttemptTest = () => {
         console.log("[AttemptTest] Cleared attempt state from localStorage");
       }
 
-      // Redirect to results page
-      router.push(`/results/${result.attemptId}`);
+      // Redirect to results page immediately
+      const redirectUrl = `/results/${result.attemptId}`;
+      // console.log(`[AttemptTest] Redirecting to ${redirectUrl}`);
+      router.push(redirectUrl);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "Failed to submit test. Please try again.";
       setSubmitError(message);
-      console.error("Error submitting test:", error);
-    } finally {
+      console.error("[AttemptTest] Error submitting test:", error);
       setIsSubmitting(false);
     }
   };
