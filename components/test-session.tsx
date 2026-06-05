@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import type { AttemptAnswer, Question, QuestionStatus } from "./types";
 import { QuestionRenderer } from "./question-renderer";
 import { QuestionPalette } from "./question-palette";
