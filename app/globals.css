@@ -24,3 +24,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* Prevents the default overscroll behavior (e.g., pull-to-refresh) on mobile devices */
+html, body{
+  overscroll-behavior: none;
+}
