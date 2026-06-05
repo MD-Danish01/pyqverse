@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { 
   loadAttemptState, 
   saveAttemptState, 
@@ -32,10 +32,12 @@ export function useAttemptSessionRecovery(
   examStartedAt: string | Date,
   durationSeconds?: number
 ): RecoveryResult {
-  const resultRef = useRef<RecoveryResult>({ savedState: null, isExpired: false });
+  const [result, setResult] = useState<RecoveryResult>({ savedState: null, isExpired: false });
 
   // Only run recovery once on mount
   useEffect(() => {
+    let newResult: RecoveryResult = { savedState: null, isExpired: false };
+
     const startTime = new Date(examStartedAt).getTime();
     const now = Date.now();
     const elapsedSeconds = (now - startTime) / 1000;
@@ -45,38 +47,35 @@ export function useAttemptSessionRecovery(
 
     if (hasExpired) {
       console.log(`[attemptSessionManager] Exam expired (${Math.floor(elapsedSeconds)}s > ${durationSeconds}s), discarding saved state`);
-      resultRef.current = { savedState: null, isExpired: true };
-      return;
+      newResult = { savedState: null, isExpired: true };
+    } else {
+      // Attempt to load saved state
+      const loadedState = loadAttemptState(attemptId);
+
+      if (loadedState) {
+        // Validate state consistency
+        if (validateAttemptStateConsistency(loadedState)) {
+          // Extract state without metadata fields
+          const { savedAt, ...stateData } = loadedState;
+
+          console.log(`[attemptSessionManager] Successfully recovered attempt state (saved ${new Date(savedAt).toLocaleTimeString()})`);
+          newResult = {
+            savedState: stateData as Omit<AttemptState, 'version' | 'attemptId' | 'savedAt'>,
+            isExpired: false,
+            recoveredAt: new Date(),
+          };
+        } else {
+          console.warn(`[attemptSessionManager] Loaded state failed validation, discarding`);
+          clearAttemptState(attemptId);
+        }
+      }
     }
 
-    // Attempt to load saved state
-    const loadedState = loadAttemptState(attemptId);
-
-    if (!loadedState) {
-      resultRef.current = { savedState: null, isExpired: false };
-      return;
-    }
-
-    // Validate state consistency
-    if (!validateAttemptStateConsistency(loadedState)) {
-      console.warn(`[attemptSessionManager] Loaded state failed validation, discarding`);
-      clearAttemptState(attemptId);
-      resultRef.current = { savedState: null, isExpired: false };
-      return;
-    }
-
-    // Extract state without metadata fields
-    const { version, attemptId: storedAttemptId, savedAt, ...stateData } = loadedState;
-
-    console.log(`[attemptSessionManager] Successfully recovered attempt state (saved ${new Date(savedAt).toLocaleTimeString()})`);
-    resultRef.current = {
-      savedState: stateData as Omit<AttemptState, 'version' | 'attemptId' | 'savedAt'>,
-      isExpired: false,
-      recoveredAt: new Date(),
-    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setResult(newResult);
   }, [attemptId, examStartedAt, durationSeconds]);
 
-  return resultRef.current;
+  return result;
 }
 
 /**
@@ -176,12 +175,10 @@ export function useAttemptCleanup(
  * @returns Function to call for manual cleanup
  */
 export function useManualAttemptCleanup(attemptId: string): () => void {
-  const cleanupRef = useRef(() => {
+  return useCallback(() => {
     clearAttemptState(attemptId);
     console.log(`[attemptSessionManager] Cleared attempt state on manual cleanup`);
-  });
-
-  return cleanupRef.current;
+  }, [attemptId]);
 }
 
 /**
