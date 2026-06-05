@@ -10,6 +10,10 @@ type TestActionsProps = {
   disableNext?: boolean;
   onSubmit?: () => void | Promise<void>;
   isSubmitting?: boolean;
+  submitLabel?: string;
+  onTogglePalette?: () => void;
+  isPaletteOpen?: boolean;
+  remainingSeconds?: number;
 };
 
 const baseButton =
@@ -37,6 +41,10 @@ export const TestActions = ({
   disableNext,
   onSubmit,
   isSubmitting,
+  submitLabel = "SUBMIT",
+  onTogglePalette,
+  isPaletteOpen,
+  remainingSeconds,
 }: TestActionsProps) => {
   return (
     <div className="sticky bottom-0 z-10 border-t border-gray-200 bg-white px-2 py-3 sm:px-4 md:px-6 lg:px-20">
@@ -84,7 +92,7 @@ export const TestActions = ({
               disabled={isSubmitting}
               className={greenButton}
             >
-              {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
+              {isSubmitting ? `${submitLabel}...` : submitLabel}
             </button>
           ) : null}
         </div>
