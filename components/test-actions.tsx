@@ -10,17 +10,6 @@ type TestActionsProps = {
   disableNext?: boolean;
   onSubmit?: () => void | Promise<void>;
   isSubmitting?: boolean;
-  submitLabel?: string;
-  onTogglePalette?: () => void;
-  isPaletteOpen?: boolean;
-  remainingSeconds?: number;
-};
-
-const formatTime = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
 const baseButton =
@@ -48,10 +37,6 @@ export const TestActions = ({
   disableNext,
   onSubmit,
   isSubmitting,
-  submitLabel = "Submit Test",
-  onTogglePalette,
-  isPaletteOpen,
-  remainingSeconds = 0,
 }: TestActionsProps) => {
   return (
     <div className="sticky bottom-0 z-10 border-t border-gray-200 bg-white px-2 py-3 sm:px-4 md:px-6 lg:px-20">

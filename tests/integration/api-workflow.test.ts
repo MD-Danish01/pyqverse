@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
 // Type definitions
-interface UserCreated {
-  id: number;
-}
-
 interface Question {
   id: number;
   questionText?: string;
@@ -106,7 +102,7 @@ describe('Test Attempt Workflow', () => {
     });
 
     it('should return questions with options', () => {
-      const startAttempt = (examId: number, userId: number): AttemptStarted => {
+      const startAttempt = (): AttemptStarted => {
         return {
           attemptId: 1,
           questions: [
@@ -122,7 +118,7 @@ describe('Test Attempt Workflow', () => {
         };
       };
 
-      const result = startAttempt(1, 1);
+      const result = startAttempt();
       const question = result.questions[0];
 
       expect(question).toHaveProperty('options');
@@ -133,21 +129,21 @@ describe('Test Attempt Workflow', () => {
     });
 
     it('should reject attempt without examId', () => {
-      const startAttempt = (examId: number | null, userId: number): AttemptStarted => {
-        if (!examId) throw new Error('Missing examId');
+      const startAttempt = (_examId: number | null): AttemptStarted => {
+        if (!_examId) throw new Error('Missing examId');
         return { attemptId: 1, questions: [] };
       };
 
-      expect(() => startAttempt(null, 1)).toThrow('Missing examId');
+      expect(() => startAttempt(null)).toThrow('Missing examId');
     });
 
     it('should reject attempt without userId', () => {
-      const startAttempt = (examId: number, userId: number | null): AttemptStarted => {
+      const startAttempt = (userId: number | null): AttemptStarted => {
         if (!userId) throw new Error('Missing userId');
         return { attemptId: 1, questions: [] };
       };
 
-      expect(() => startAttempt(1, null as any)).toThrow('Missing userId');
+      expect(() => startAttempt(null as unknown as number)).toThrow('Missing userId');
     });
   });
 
