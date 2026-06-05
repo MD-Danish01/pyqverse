@@ -26,10 +26,17 @@ export type TestSessionSubmitPayload = {
   questionStatuses: Record<number, QuestionStatus>;
 };
 
+export type TestSessionStateChangePayload = {
+  answers: Record<number, AttemptAnswer>;
+  currentQuestionIndex: number;
+  isPaletteOpen: boolean;
+};
+
 type TestSessionProps = {
   questions: Question[];
   initialAnswers?: Record<number, AttemptAnswer>;
   onSubmit?: (payload: TestSessionSubmitPayload) => void | Promise<void>;
+  onStateChange?: (payload: TestSessionStateChangePayload) => void;
   isSubmitting?: boolean;
   submitLabel?: string;
   examName: string;
@@ -41,6 +48,7 @@ export const TestSession = ({
   questions,
   initialAnswers,
   onSubmit,
+  onStateChange,
   isSubmitting,
   submitLabel = "Submit Test",
   examName,
@@ -72,6 +80,17 @@ export const TestSession = ({
     }
     return answers[currentQuestion.id] ?? createEmptyAnswer(currentQuestion.id);
   }, [answers, currentQuestion]);
+
+  // Notify parent of state changes for persistence
+  useEffect(() => {
+    if (onStateChange) {
+      onStateChange({
+        answers,
+        currentQuestionIndex,
+        isPaletteOpen,
+      });
+    }
+  }, [answers, currentQuestionIndex, isPaletteOpen, onStateChange]);
 
   const updateAnswer = useCallback(
     (questionId: number, updater: (answer: AttemptAnswer) => AttemptAnswer) => {

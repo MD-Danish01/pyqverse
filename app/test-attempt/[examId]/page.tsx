@@ -1,12 +1,17 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { TestSession, type TestSessionSubmitPayload } from "@/components/test-session";
+import { TestSession, type TestSessionSubmitPayload, type TestSessionStateChangePayload } from "@/components/test-session";
 import type {
   AttemptAnswer,
   Question,
   QuestionOptionLabel,
 } from "@/components/types";
+import {
+  useAttemptAutoSave,
+  useAttemptCleanup,
+} from "@/lib/attemptSessionManager";
+import { clearAttemptState, loadAttemptState } from "@/lib/attemptStorage";
 
 type AttemptQuestionPayload = {
   order: number;
@@ -85,6 +90,64 @@ const AttemptTest = () => {
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [isExamLoading, setIsExamLoading] = useState(true);
   const [examError, setExamError] = useState<string | null>(null);
+  
+  // Helper to initialize session state from localStorage or defaults
+  const initializeSessionState = (attemptIdParam: number | null, examInfoParam: ExamSummary | null) => {
+    if (!attemptIdParam || !examInfoParam) {
+      return {
+        answers: {},
+        currentQuestionIndex: 0,
+        isPaletteOpen: false,
+        isExpiredSessionWarningShown: false,
+      };
+    }
+
+    // Check if exam time has expired
+    const now = Date.now();
+    const elapsedSeconds = (now - new Date().getTime()) / 1000;
+    const hasExpired = elapsedSeconds > examInfoParam.durationSeconds;
+
+    if (hasExpired) {
+      console.log("[AttemptTest] Exam expired, discarding saved state");
+      return {
+        answers: {},
+        currentQuestionIndex: 0,
+        isPaletteOpen: false,
+        isExpiredSessionWarningShown: true,
+      };
+    }
+
+    // Try to load saved state
+    const savedState = loadAttemptState(attemptIdParam.toString());
+
+    if (savedState) {
+      console.log("[AttemptTest] Restored exam state from localStorage");
+      return {
+        answers: savedState.answers,
+        currentQuestionIndex: savedState.currentQuestionIndex,
+        isPaletteOpen: savedState.isPaletteOpen,
+        isExpiredSessionWarningShown: false,
+      };
+    }
+
+    return {
+      answers: {},
+      currentQuestionIndex: 0,
+      isPaletteOpen: false,
+      isExpiredSessionWarningShown: false,
+    };
+  };
+
+  // Session state for auto-save
+  const [sessionState, setSessionState] = useState(() =>
+    initializeSessionState(attemptId, examInfo)
+  );
+
+  // Extract individual values for easier use
+  const sessionAnswers = sessionState.answers;
+  const currentQuestionIndex = sessionState.currentQuestionIndex;
+  const isPaletteOpen = sessionState.isPaletteOpen;
+  const isExpiredSessionWarningShown = sessionState.isExpiredSessionWarningShown;
 
   const shouldStartTimer = remainingSeconds !== null && remainingSeconds > 0;
 
@@ -185,6 +248,40 @@ const AttemptTest = () => {
     }
   }, [examIdParam]);
 
+  // Recovery: Restore saved state from localStorage if available
+  // Only done during initial state initialization above
+  // No need to re-run when attemptId changes as that would be a new component
+
+  // Auto-save: Persist session state to localStorage whenever it changes
+  useAttemptAutoSave(
+    attemptId?.toString() ?? "",
+    sessionAnswers,
+    currentQuestionIndex,
+    isPaletteOpen,
+    500, // debounce 500ms
+  );
+
+  // Cleanup: Clear localStorage on tab close
+  useAttemptCleanup(attemptId?.toString() ?? "", ["beforeunload"]);
+
+  // Cleanup on time expiry
+  useEffect(() => {
+    if (remainingSeconds === 0 && attemptId) {
+      console.log("[AttemptTest] Exam time expired, clearing attempt state");
+      clearAttemptState(attemptId.toString());
+    }
+  }, [remainingSeconds, attemptId]);
+
+  // Handle state changes from TestSession for persistence
+  const handleTestSessionStateChange = (payload: TestSessionStateChangePayload) => {
+    setSessionState((prev) => ({
+      ...prev,
+      answers: payload.answers,
+      currentQuestionIndex: payload.currentQuestionIndex,
+      isPaletteOpen: payload.isPaletteOpen,
+    }));
+  };
+
   const handleSubmitTest = async ({ answers }: TestSessionSubmitPayload) => {
     const userId: number | null = JSON.parse(
       localStorage.getItem("userId") ?? "null",
@@ -232,6 +329,12 @@ const AttemptTest = () => {
 
       const result = await res.json();
       console.log("Test submitted successfully:", result);
+
+      // Clear localStorage after successful submission
+      if (attemptId) {
+        clearAttemptState(attemptId.toString());
+        console.log("[AttemptTest] Cleared attempt state from localStorage");
+      }
 
       // Redirect to results page
       router.push(`/results/${result.attemptId}`);
@@ -285,6 +388,14 @@ const AttemptTest = () => {
 
   return (
     <div className="flex h-full flex-col gap-6">
+      {isExpiredSessionWarningShown ? (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <p className="text-sm text-yellow-700">
+            ⚠️ Your previous exam session has expired. A new attempt has started. Your previous answers could not be recovered.
+          </p>
+        </div>
+      ) : null}
+
       {submitError ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-700">{submitError}</p>
@@ -301,6 +412,8 @@ const AttemptTest = () => {
         <TestSession
           key={sessionKey}
           questions={questions}
+          initialAnswers={sessionAnswers}
+          onStateChange={handleTestSessionStateChange}
           onSubmit={handleSubmitTest}
           isSubmitting={isSubmitting}
           examName={examInfo.name}
