@@ -6,13 +6,22 @@ on:
     types:
       - completed
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Deploy to Azure VM over SSH
+      - name: Check workflow run
+        run: |
+          echo "Workflow: ${{ github.event.workflow_run.name }}"
+          echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Branch: ${{ github.event.workflow_run.head_branch }}"
+          
+      - name: Pull latest code from main branch
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VM_HOST }}
@@ -21,6 +30,34 @@ jobs:
           script: |
             cd ~/pyqverse
             git pull origin main
+
+      - name: Install dependencies
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/pyqverse
             npm ci
+
+      - name: Run production build
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/pyqverse
             npm run build
+
+      - name: Restart application
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/pyqverse
             pm2 restart pyqverse || pm2 start npm --name pyqverse -- start
+            pm2 save
