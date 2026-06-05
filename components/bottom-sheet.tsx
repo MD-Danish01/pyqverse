@@ -20,19 +20,21 @@ export const BottomSheet = ({
   const touchStartY = useRef<number>(0);
   const touchStartX = useRef<number>(0);
 
-  useEffect(() => {
-    if (isOpen) {
-      setIsAnimating(true);
-      document.body.style.overflow = "hidden";
-    } else {
-      setIsAnimating(false);
-      document.body.style.overflow = "unset";
-    }
+ useEffect(() => {
+    if (!isOpen) {
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 300); // Match the transition-duration from CSS
 
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isOpen]);
+  }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
