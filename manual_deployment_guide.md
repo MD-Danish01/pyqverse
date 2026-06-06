@@ -164,7 +164,97 @@ Application should return HTML.
 
 ---
 
-## 11. Configure PM2 Auto Start
+## 11. Install and Configure Nginx
+
+Install Nginx:
+
+```bash
+sudo apt update
+
+sudo apt install -y nginx
+```
+
+Allow HTTP traffic through the firewall:
+
+```bash
+sudo ufw allow 'Nginx Full'
+```
+
+Create a new Nginx site configuration:
+
+```bash
+sudo nano /etc/nginx/sites-available/pyqverse
+```
+
+Add the following configuration:
+
+```nginx
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable the site:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/pyqverse /etc/nginx/sites-enabled/
+```
+
+Remove the default site if desired:
+
+```bash
+sudo rm /etc/nginx/sites-enabled/default
+```
+
+Test the configuration:
+
+```bash
+sudo nginx -t
+```
+
+Reload Nginx:
+
+```bash
+sudo systemctl reload nginx
+```
+
+Verify Nginx is running:
+
+```bash
+sudo systemctl status nginx
+```
+
+Now requests to:
+
+```text
+http://<VM_IP>
+```
+
+will be forwarded to:
+
+```text
+http://localhost:3000
+```
+
+where the Next.js application is running.
+
+---
+
+## 12. Configure PM2 Auto Start
 
 Generate startup script:
 
@@ -182,7 +272,7 @@ sudo env PATH=$PATH:/home/azureuser/.nvm/versions/node/v20.x.x/bin pm2 startup s
 
 ---
 
-## 12. Save PM2 Process List
+## 13. Save PM2 Process List
 
 ```bash
 pm2 save
@@ -230,6 +320,40 @@ pm2 list
 
 ---
 
+## Useful Nginx Commands
+
+Test configuration:
+
+```bash
+sudo nginx -t
+```
+
+Reload configuration:
+
+```bash
+sudo systemctl reload nginx
+```
+
+Restart Nginx:
+
+```bash
+sudo systemctl restart nginx
+```
+
+View logs:
+
+```bash
+sudo tail -f /var/log/nginx/error.log
+```
+
+Check status:
+
+```bash
+sudo systemctl status nginx
+```
+
+---
+
 ## Deployment Update Process
 
 After new code is pushed to GitHub:
@@ -247,3 +371,5 @@ npm run build
 
 pm2 restart pyqverse
 ```
+
+Nginx does not need to be restarted during normal deployments because it continues forwarding traffic from port 80 to the Next.js application running on port 3000.
