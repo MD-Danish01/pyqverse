@@ -39,26 +39,28 @@ jobs:
       - name: Run production build
         run: npm run build
 
-  deploy:
-    needs: ci
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+ ## deployment on Azure VM using SSH action, those are only for learning purposes
+ 
+  # deploy:
+  #   needs: ci
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Deploy to Azure VM
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          script: |
-              export NVM_DIR="$HOME/.nvm"
-              [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+  #   steps:
+  #     - name: Deploy to Azure VM
+  #       uses: appleboy/ssh-action@v1.2.0
+  #       with:
+  #         host: ${{ secrets.VM_HOST }}
+  #         username: ${{ secrets.VM_USER }}
+  #         key: ${{ secrets.VM_SSH_KEY }}
+  #         script: |
+  #             export NVM_DIR="$HOME/.nvm"
+  #             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-              cd ~/pyqverse
+  #             cd ~/pyqverse
 
-              git pull origin main
-              npm ci
-              npm run build
+  #             git pull origin main
+  #             npm ci
+  #             npm run build
 
-              pm2 restart pyqverse
+  #             pm2 restart pyqverse
